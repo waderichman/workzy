@@ -445,7 +445,7 @@ export async function createTaskInSupabase(input: {
     .from("tasks")
     .insert({
       posted_by: authData.user.id,
-      category_id: input.categoryId,
+      category_id: input.categoryId.trim() || null,
       title: input.title,
       description: input.description,
       location: input.location,
