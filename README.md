@@ -1,18 +1,19 @@
 # TaskDash
 
-Expo/React Native app for a local task marketplace with Supabase auth and live marketplace data.
+TaskDash is a local task marketplace app built with Expo and React Native.
 
-## Included
+People posting work can create a job, answer public questions, and review private offers from nearby taskers. Taskers can discover jobs in the ZIP codes they cover, join the public thread for a job, and open a private chat when they want to negotiate price or details.
+
+## What It Does
 
 - Two-sided flow with `poster` and `tasker` roles
-- Supabase email/password auth with email confirmation
-- ZIP-based job visibility for local taskers
-- Post flow for publishing a job and opening a negotiation thread
-- Inbox screen for chat, questions, and offer negotiation
-- Profile screen with role switching and account stats
-- Zustand state with persisted active role and selected thread
+- Supabase auth for sign up, sign in, and session handling
+- ZIP-based matching so local jobs reach the right taskers
+- Public job threads for general questions
+- Private poster-tasker chats for offers and negotiation
+- Profile and role switching for hiring or tasking
 
-## Run
+## Local Setup
 
 1. Install Node 20+.
 2. Run `npm install`.
@@ -31,4 +32,3 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 - The SQL schema lives in `supabase/schema.sql`.
 - Email confirmation redirects should include `taskdash://confirm`.
-- The current product flow includes one public job thread for questions plus separate private poster-tasker chats for negotiation and offers.
