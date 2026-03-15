@@ -88,6 +88,7 @@ type AppState = {
   allReviews: Review[];
   highlights: MarketplacePayload["highlights"] | null;
   selectedConversationId: string | null;
+  inboxNotice: string | null;
   pendingThreadTarget:
     | {
         taskId: string;
@@ -158,6 +159,7 @@ function createEmptyAuthState() {
     reviews: [],
     highlights: null,
     selectedConversationId: null,
+    inboxNotice: null,
     pendingThreadTarget: null
   };
 }
@@ -356,7 +358,8 @@ function applyMarketplacePayload(
       selectedConversationId &&
       visibleConversations.some((item) => item.id === selectedConversationId)
         ? selectedConversationId
-        : visibleConversations[0]?.id ?? null
+        : visibleConversations[0]?.id ?? null,
+    inboxNotice: null
   };
 }
 
@@ -376,7 +379,8 @@ export const useAppStore = create<AppState>()(
       beginThreadOpen: (taskId, threadType) =>
         set({
           pendingThreadTarget: { taskId, threadType },
-          error: null
+          error: null,
+          inboxNotice: null
         }),
       hydrateAuthSession: async () => {
         if (!hasSupabaseEnv()) {
@@ -482,7 +486,7 @@ export const useAppStore = create<AppState>()(
         }
       },
       selectConversation: (conversationId) =>
-        set({ selectedConversationId: conversationId, pendingThreadTarget: null }),
+        set({ selectedConversationId: conversationId, pendingThreadTarget: null, inboxNotice: null }),
       login: async ({ email, password, role }) => {
         set({ status: "loading", error: null });
 
@@ -826,9 +830,21 @@ export const useAppStore = create<AppState>()(
           });
           return result.conversationId;
         } catch (error) {
+          const message = error instanceof Error ? error.message : "Unable to open conversation";
+          if (message === "No tasker has opened a private thread for this job yet.") {
+            set({
+              status: "success",
+              error: null,
+              inboxNotice: message,
+              pendingThreadTarget: null,
+              selectedConversationId: null
+            });
+            return null;
+          }
+
           set({
             status: "error",
-            error: error instanceof Error ? error.message : "Unable to open conversation",
+            error: message,
             pendingThreadTarget: null
           });
           return null;

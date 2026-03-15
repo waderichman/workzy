@@ -14,14 +14,14 @@ const roleCopy: Record<
   poster: {
     title: "Post the job. Run the thread. Book the right person.",
     subtitle:
-      "Keep everything in one negotiation thread so you can compare offers, answer questions, and hire cleanly.",
+      "Each job gets one public thread for questions and private inbox chats with interested taskers.",
     primaryCta: "Post a new job",
     secondaryCta: "Open your inbox"
   },
   tasker: {
     title: "Find nearby work and negotiate directly with posters.",
     subtitle:
-      "See local jobs, open the thread, ask a clarifying question, and send the price you want to win the work.",
+      "See local jobs, read the public thread, then message the poster directly when you want to quote the work.",
     primaryCta: "Browse jobs",
     secondaryCta: "Open your inbox"
   }
@@ -40,7 +40,6 @@ export default function DiscoverScreen() {
   const status = useAppStore((state) => state.status);
   const beginThreadOpen = useAppStore((state) => state.beginThreadOpen);
   const openConversationForTask = useAppStore((state) => state.openConversationForTask);
-  const openPublicConversationForTask = useAppStore((state) => state.openPublicConversationForTask);
 
   const copy = roleCopy[activeRole];
 
@@ -54,14 +53,12 @@ export default function DiscoverScreen() {
 
   const handleOpenTask = (taskId: string) => {
     beginThreadOpen(taskId, "private");
-    router.navigate("/alerts");
+    router.push("/inbox");
     void openConversationForTask(taskId);
   };
 
   const handleOpenPublicThread = (taskId: string) => {
-    beginThreadOpen(taskId, "public");
-    router.navigate("/alerts");
-    void openPublicConversationForTask(taskId);
+    router.push(`/job-thread/${taskId}` as never);
   };
 
   return (
@@ -85,14 +82,14 @@ export default function DiscoverScreen() {
             label="Poster"
             icon="create-outline"
             active={activeRole === "poster"}
-            description="Create jobs and manage private chats from interested taskers."
+            description="Create jobs, answer the public thread, and manage private inbox chats."
             onPress={() => selectRole("poster")}
           />
           <RoleCard
             label="Tasker"
             icon="flash-outline"
             active={activeRole === "tasker"}
-            description="Open nearby jobs and start a private chat with the poster."
+            description="Read the job thread, then message the poster when you want to talk details."
             onPress={() => selectRole("tasker")}
           />
         </View>
@@ -103,7 +100,7 @@ export default function DiscoverScreen() {
             filled
             onPress={() => router.push(activeRole === "poster" ? "/topics" : "/")}
           />
-          <QuickActionButton label={copy.secondaryCta} onPress={() => router.push("/alerts")} />
+          <QuickActionButton label={copy.secondaryCta} onPress={() => router.push("/inbox")} />
         </View>
       </LinearGradient>
 
@@ -135,7 +132,7 @@ export default function DiscoverScreen() {
 
       <SectionHeader
         title={activeRole === "poster" ? "Manage your open jobs" : "Nearby jobs"}
-        detail={activeRole === "poster" ? "Keep chats moving" : "Open a thread to negotiate"}
+        detail={activeRole === "poster" ? "Keep the thread and inbox moving" : "Read the thread, then message the poster"}
       />
 
       <FlatList
@@ -317,14 +314,14 @@ function TaskCard({
 
       <View className="mt-4 rounded-[22px] bg-[#faf7f2] px-4 py-4">
         <Text className="text-xs font-semibold uppercase tracking-[1.5px] text-[#6f7d8d]">
-          {isPosterView ? "Private chat activity" : "Poster"}
+          {isPosterView ? "Inbox activity" : "Poster"}
         </Text>
         <Text className="mt-2 text-base font-bold text-[#08101c]">
           {isPosterView ? `${task.offers} offers | ${task.questions} questions` : poster?.name ?? "Local poster"}
         </Text>
         <View className="mt-3 flex-row flex-wrap gap-3">
           {isPosterView ? (
-            <MetaPill icon="chatbubble-ellipses-outline" text="Review each tasker chat and compare offers" />
+            <MetaPill icon="chatbubble-ellipses-outline" text="Open inbox chats and compare offers" />
           ) : (
             <>
               <MetaPill
@@ -361,12 +358,12 @@ function TaskCard({
         <View className="mt-3 flex-row gap-3">
           <Pressable onPress={onOpenPublicThread} className="flex-1 rounded-full bg-[#f3efe8] px-4 py-3">
             <Text className="text-center text-sm font-bold text-[#08101c]">
-              {isPosterView ? "View public thread" : "Open public thread"}
+              {isPosterView ? "Open job thread" : "View job thread"}
             </Text>
           </Pressable>
           <Pressable onPress={onOpenThread} className="flex-1 rounded-full bg-[#08101c] px-4 py-3">
             <Text className="text-center text-sm font-bold text-white">
-              {task.status === "completed" ? "View private chats" : isPosterView ? "Manage private chats" : "Start private chat"}
+              {task.status === "completed" ? "Open inbox chat" : isPosterView ? "Open inbox chats" : "Message poster"}
             </Text>
           </Pressable>
         </View>

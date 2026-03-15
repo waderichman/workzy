@@ -15,7 +15,7 @@ export default function RootLayout() {
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: "#f6f3ed" },
-            animation: "fade"
+            animation: "simple_push"
           }}
         />
       </RootProvider>
