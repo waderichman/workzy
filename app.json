@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "TaskDash",
+    "owner": "waderichman",
+    "slug": "taskdash",
+    "scheme": "taskdash",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#f6f3ed"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.irene.taskdash",
+      "infoPlist": {
+        "NSUserNotificationsUsageDescription": "TaskDash uses notifications for task updates, chat messages, and booking activity.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.irene.taskdash"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-notifications"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8af772a2-8440-4f6e-b666-78b53c0ce8e3"
+      }
+    }
+  }
+}
