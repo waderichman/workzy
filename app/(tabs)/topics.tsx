@@ -61,7 +61,7 @@ export default function PostTaskScreen() {
     setBudget("120");
     setTags("same day, careful handling");
     Alert.alert("Job posted", "Your job is live. Matching taskers can now open the thread and start the conversation.");
-    router.push("/(tabs)/index");
+    router.replace("/");
   };
 
   if (activeRole === "tasker") {
