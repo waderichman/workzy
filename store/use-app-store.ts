@@ -295,12 +295,15 @@ async function ensureSupabaseProfile(user: User, fallback?: PendingSignUp | null
       throw new Error(deleteError.message);
     }
 
-    const { error: serviceAreaError } = await supabase.from("tasker_service_areas").insert(
-      serviceZipCodes.map((value) => ({
-        profile_id: user.id,
-        zip_code: value
-      }))
-    );
+    const { error: serviceAreaError } = await supabase
+      .from("tasker_service_areas")
+      .upsert(
+        serviceZipCodes.map((value) => ({
+          profile_id: user.id,
+          zip_code: value
+        })),
+        { onConflict: "profile_id,zip_code", ignoreDuplicates: true }
+      );
 
     if (serviceAreaError) {
       throw new Error(serviceAreaError.message);
@@ -625,12 +628,15 @@ export const useAppStore = create<AppState>()(
           safeTravelRadius
         );
 
-        const { error: serviceAreaError } = await supabase.from("tasker_service_areas").insert(
-          serviceZipCodes.map((value) => ({
-            profile_id: authUser.id,
-            zip_code: value
-          }))
-        );
+        const { error: serviceAreaError } = await supabase
+          .from("tasker_service_areas")
+          .upsert(
+            serviceZipCodes.map((value) => ({
+              profile_id: authUser.id,
+              zip_code: value
+            })),
+            { onConflict: "profile_id,zip_code", ignoreDuplicates: true }
+          );
 
         if (serviceAreaError) {
           set({ status: "error", error: serviceAreaError.message });
@@ -733,12 +739,15 @@ export const useAppStore = create<AppState>()(
           return false;
         }
 
-        const { error: serviceAreaError } = await supabase.from("tasker_service_areas").insert(
-          serviceZipCodes.map((value) => ({
-            profile_id: authData.user.id,
-            zip_code: value
-          }))
-        );
+        const { error: serviceAreaError } = await supabase
+          .from("tasker_service_areas")
+          .upsert(
+            serviceZipCodes.map((value) => ({
+              profile_id: authData.user.id,
+              zip_code: value
+            })),
+            { onConflict: "profile_id,zip_code", ignoreDuplicates: true }
+          );
 
         if (serviceAreaError) {
           set({ status: "error", error: serviceAreaError.message });

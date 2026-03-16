@@ -125,6 +125,13 @@ app.post("/stripe/connect/account", async (req, res) => {
       country: STRIPE_PLATFORM_COUNTRY,
       email,
       business_type: "individual",
+      business_profile: {
+        product_description: "Local in-person household and errand services booked through Workzy."
+      },
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true }
+      },
       metadata: {
         profileId,
         name: name || ""
