@@ -8,6 +8,8 @@ create table if not exists public.profiles (
   home_base text default '',
   zip_code text not null check (zip_code ~ '^\d{5}$'),
   travel_radius_miles integer not null default 10 check (travel_radius_miles between 0 and 50),
+  stripe_account_id text unique,
+  stripe_account_status text not null default 'not_started' check (stripe_account_status in ('not_started', 'pending', 'active')),
   active_role text not null default 'poster' check (active_role in ('poster', 'tasker')),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
@@ -45,8 +47,11 @@ create table if not exists public.tasks (
   timeline text not null,
   status text not null default 'open' check (status in ('open', 'assigned', 'in_progress', 'completion_requested', 'completed', 'released')),
   payment_status text not null default 'booking_needed' check (payment_status in ('booking_needed', 'booked', 'completion_confirmed', 'closed')),
+  stripe_payment_intent_id text unique,
+  stripe_transfer_id text unique,
   completion_requested_at timestamptz,
   completed_at timestamptz,
+  funds_released_at timestamptz,
   posted_at timestamptz not null default timezone('utc', now())
 );
 
@@ -97,12 +102,17 @@ create table if not exists public.reviews (
 );
 
 alter table public.profiles add column if not exists travel_radius_miles integer not null default 10;
+alter table public.profiles add column if not exists stripe_account_id text;
+alter table public.profiles add column if not exists stripe_account_status text not null default 'not_started';
 alter table public.tasks add column if not exists payment_status text not null default 'booking_needed';
 alter table public.tasks add column if not exists platform_fee_rate_basis_points integer not null default 1000;
 alter table public.tasks add column if not exists platform_fee_amount integer not null default 0;
 alter table public.tasks add column if not exists tasker_payout_amount integer not null default 0;
+alter table public.tasks add column if not exists stripe_payment_intent_id text;
+alter table public.tasks add column if not exists stripe_transfer_id text;
 alter table public.tasks add column if not exists completion_requested_at timestamptz;
 alter table public.tasks add column if not exists completed_at timestamptz;
+alter table public.tasks add column if not exists funds_released_at timestamptz;
 alter table public.tasks alter column payment_status set default 'booking_needed';
 alter table public.tasks alter column platform_fee_rate_basis_points set default 1000;
 alter table public.tasks alter column platform_fee_amount set default 0;
@@ -112,6 +122,28 @@ drop table if exists public.categories cascade;
 alter table public.conversations add column if not exists tasker_id uuid references public.profiles (id) on delete cascade;
 alter table public.conversations add column if not exists thread_type text not null default 'private' check (thread_type in ('public', 'private'));
 update public.conversations set thread_type = coalesce(thread_type, 'private');
+
+do $$
+declare
+  constraint_name text;
+begin
+  for constraint_name in
+    select conname
+    from pg_constraint
+    where conrelid = 'public.profiles'::regclass
+      and contype = 'c'
+      and pg_get_constraintdef(oid) like '%stripe_account_status%'
+  loop
+    execute format('alter table public.profiles drop constraint %I', constraint_name);
+  end loop;
+end $$;
+
+alter table public.profiles
+drop constraint if exists profiles_stripe_account_status_check;
+
+alter table public.profiles
+add constraint profiles_stripe_account_status_check
+check (stripe_account_status in ('not_started', 'pending', 'active'));
 
 do $$
 declare
@@ -206,6 +238,18 @@ drop constraint if exists tasks_tasker_payout_amount_check;
 alter table public.tasks
 add constraint tasks_tasker_payout_amount_check
 check (tasker_payout_amount >= 0);
+
+create unique index if not exists idx_profiles_stripe_account_id
+on public.profiles (stripe_account_id)
+where stripe_account_id is not null;
+
+create unique index if not exists idx_tasks_stripe_payment_intent_id
+on public.tasks (stripe_payment_intent_id)
+where stripe_payment_intent_id is not null;
+
+create unique index if not exists idx_tasks_stripe_transfer_id
+on public.tasks (stripe_transfer_id)
+where stripe_transfer_id is not null;
 
 do $$
 declare

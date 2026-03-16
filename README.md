@@ -24,11 +24,42 @@ People posting work can create a job, answer public questions, and review privat
 Example:
 
 ```bash
+EXPO_PUBLIC_API_BASE_URL=http://YOUR_COMPUTER_LAN_IP:4000
 EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 ```
 
 ## Notes
 
 - The SQL schema lives in `supabase/schema.sql`.
 - Email confirmation redirects should include `workzy://confirm`.
+
+## Payments Backend
+
+Workzy now includes a small Stripe backend scaffold in `backend/server.js`.
+
+1. Copy `backend/.env.example` to `backend/.env`
+2. Add your backend-only secrets there
+3. Run `npm run api`
+
+Backend envs:
+
+```bash
+PORT=4000
+STRIPE_SECRET_KEY=your_rotated_server_only_secret
+STRIPE_WEBHOOK_SECRET=your_webhook_secret
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+STRIPE_CONNECT_REFRESH_URL=https://example.com/stripe/refresh
+STRIPE_CONNECT_RETURN_URL=https://example.com/stripe/return
+```
+
+Available routes:
+
+- `GET /health`
+- `POST /stripe/connect/account`
+- `POST /stripe/connect/account-link`
+- `POST /stripe/payments/payment-intent`
+- `POST /stripe/payments/release`
+- `POST /webhooks/stripe`
