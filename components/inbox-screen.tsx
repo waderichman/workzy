@@ -88,10 +88,6 @@ export function InboxScreen() {
   const latestOffer = [...(selectedConversation?.messages ?? [])]
     .reverse()
     .find((message) => typeof message.offerAmount === "number");
-  const pendingTask = pendingThreadTarget
-    ? tasks.find((task) => task.id === pendingThreadTarget.taskId)
-    : null;
-  const isOpeningPendingThread = Boolean(pendingThreadTarget && !pendingConversation);
   const canAcceptOffer =
     Boolean(selectedConversation && latestOffer?.offerAmount) &&
     selectedTask?.postedBy === currentAccount?.id &&
@@ -272,9 +268,9 @@ export function InboxScreen() {
             When a tasker starts a private chat for this job, it will show up here.
           </Text>
         </View>
-      ) : isOpeningPendingThread || status === "loading" ? (
+      ) : status === "loading" ? (
         <View className="mt-5 rounded-[20px] border border-[#dfe8d8] bg-[#f3f8f1] px-4 py-4">
-          <Text className="text-sm font-semibold text-[#355341]">Opening inbox chat...</Text>
+          <Text className="text-sm font-semibold text-[#355341]">Loading inbox...</Text>
         </View>
       ) : null}
 
@@ -319,7 +315,7 @@ export function InboxScreen() {
       <View className="mt-6 rounded-[28px] border border-[#e8e1d5] bg-[#08101c] px-5 py-5">
         <Text className="text-xs font-semibold uppercase tracking-[2px] text-[#9cb4a4]">Inbox chat</Text>
         <Text className="mt-3 text-2xl font-bold leading-8 text-white">
-          {isOpeningPendingThread ? pendingTask?.title ?? "Opening conversation..." : selectedTask?.title ?? "Choose a conversation"}
+          {selectedTask?.title ?? "Choose a conversation"}
         </Text>
         {counterpart ? (
           <Pressable
@@ -346,15 +342,13 @@ export function InboxScreen() {
           </Pressable>
         ) : (
           <Text className="mt-2 text-sm leading-6 text-[#c0c9d5]">
-            {isOpeningPendingThread
-              ? "Preparing the inbox chat..."
-              : !selectedConversation
+            {!selectedConversation
               ? "Start a private chat from Discover, or wait for someone to message you about a job."
               : counterpartLabel}
           </Text>
         )}
 
-        {!isOpeningPendingThread && selectedTask ? (
+        {selectedTask ? (
           <View className="mt-5 flex-row flex-wrap gap-2">
             <InlinePill icon="location-outline" text={selectedTask.location} dark />
             <InlinePill icon="navigate-outline" text={selectedTask.zipCode} dark />
@@ -363,7 +357,7 @@ export function InboxScreen() {
           </View>
         ) : null}
 
-        {!isOpeningPendingThread && selectedTask ? (
+        {selectedTask ? (
           <View className="mt-4 rounded-[22px] bg-white/10 px-4 py-4">
             <Text className="text-xs font-semibold uppercase tracking-[1.5px] text-[#9cb4a4]">Job status</Text>
             <Text className="mt-2 text-sm leading-6 text-[#d9e4d7]">
@@ -401,7 +395,7 @@ export function InboxScreen() {
           </View>
         ) : null}
 
-        {!isOpeningPendingThread ? (
+        {selectedTask ? (
           <View className="mt-5 gap-3">
             <View className="flex-row gap-3">
               <QuickAction
@@ -471,11 +465,7 @@ export function InboxScreen() {
       <View className="mt-6 rounded-[28px] border border-[#e8e1d5] bg-white px-4 py-4">
         <Text className="text-sm font-semibold uppercase tracking-[2px] text-[#6f7d8d]">Conversation</Text>
         <View className="mt-4">
-          {isOpeningPendingThread ? (
-            <View className="rounded-[22px] bg-[#faf7f2] px-4 py-6">
-              <Text className="text-sm leading-6 text-[#5b6779]">Loading the selected conversation.</Text>
-            </View>
-          ) : selectedConversation?.messages.length ? (
+          {selectedConversation?.messages.length ? (
             selectedConversation.messages.map((message) => {
               const isSystem = message.kind === "system";
               const isMine = message.senderId === currentAccount?.id;
