@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect } from "react";
-import { StripeProvider } from "@stripe/stripe-react-native";
 import { hasSupabaseEnv, supabase } from "@/lib/supabase";
+import { OptionalStripeProvider } from "@/lib/optional-stripe";
 import { useAppStore } from "@/store/use-app-store";
 
 export function RootProvider({ children }: PropsWithChildren) {
@@ -34,8 +34,8 @@ export function RootProvider({ children }: PropsWithChildren) {
   }
 
   return (
-    <StripeProvider publishableKey={publishableKey}>
+    <OptionalStripeProvider publishableKey={publishableKey}>
       <>{children}</>
-    </StripeProvider>
+    </OptionalStripeProvider>
   );
 }

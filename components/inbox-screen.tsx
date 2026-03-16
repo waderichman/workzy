@@ -3,8 +3,8 @@ import { Alert, FlatList, Pressable, Text, TextInput, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
-import { useStripe } from "@stripe/stripe-react-native";
 import { Screen } from "@/components/screen";
+import { isStripeAvailable, useOptionalStripe } from "@/lib/optional-stripe";
 import { createBookingPaymentIntent } from "@/lib/payments";
 import { useAppStore } from "@/store/use-app-store";
 
@@ -27,7 +27,7 @@ function formatTaskStage(value: string) {
 export function InboxScreen() {
   const router = useRouter();
   const navigation = useNavigation();
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const stripe = useOptionalStripe();
   const currentAccount = useAppStore((state) => state.currentAccount);
   const conversations = useAppStore((state) => state.conversations);
   const tasks = useAppStore((state) => state.tasks);
@@ -200,10 +200,18 @@ export function InboxScreen() {
       return;
     }
 
+    if (!stripe || !isStripeAvailable()) {
+      Alert.alert(
+        "Stripe not available yet",
+        "This dev build does not include the Stripe native module yet. Rebuild and reinstall the Workzy dev app, then try again."
+      );
+      return;
+    }
+
     try {
       setIsOpeningCheckout(true);
       const paymentIntent = await createBookingPaymentIntent(selectedTask.id);
-      const initResult = await initPaymentSheet({
+      const initResult = await stripe.initPaymentSheet({
         merchantDisplayName: "Workzy",
         paymentIntentClientSecret: paymentIntent.clientSecret,
         returnURL: "workzy://confirm"
@@ -213,7 +221,7 @@ export function InboxScreen() {
         throw new Error(initResult.error.message);
       }
 
-      const paymentResult = await presentPaymentSheet();
+      const paymentResult = await stripe.presentPaymentSheet();
       if (paymentResult.error) {
         throw new Error(paymentResult.error.message);
       }
