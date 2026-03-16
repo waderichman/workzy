@@ -129,7 +129,6 @@ app.post("/stripe/connect/account", async (req, res) => {
         product_description: "Local in-person household and errand services booked through Workzy."
       },
       capabilities: {
-        card_payments: { requested: true },
         transfers: { requested: true }
       },
       metadata: {
