@@ -66,6 +66,11 @@ export default function AccountScreen() {
     if (saved) setIsEditing(false);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/auth");
+  };
+
   return (
     <Screen>
       <View className="rounded-[28px] border border-[#e4e7ec] bg-white px-5 py-5">
@@ -90,7 +95,7 @@ export default function AccountScreen() {
             </Text>
             <View className="mt-5 flex-row gap-3">
               <PrimaryButton label="Edit profile" onPress={() => setIsEditing(true)} />
-              <SecondaryButton label="Log out" onPress={() => void logout()} />
+              <SecondaryButton label="Log out" onPress={() => void handleLogout()} />
             </View>
           </>
         ) : (

@@ -36,6 +36,19 @@ function getStripeAccountStatus(account) {
   return account.details_submitted && account.payouts_enabled ? "active" : "pending";
 }
 
+function getSafeStripeReturnUrl(value, fallback) {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return fallback;
+  }
+
+  return /^https:\/\//i.test(trimmed) ? trimmed : fallback;
+}
+
 app.use(cors());
 app.post("/webhooks/stripe", express.raw({ type: "application/json" }), async (req, res) => {
   if (!STRIPE_WEBHOOK_SECRET) {
@@ -199,8 +212,8 @@ app.post("/stripe/connect/account-link", async (req, res) => {
 
     const link = await stripe.accountLinks.create({
       account: profile.stripe_account_id,
-      refresh_url: refreshUrl || STRIPE_CONNECT_REFRESH_URL,
-      return_url: returnUrl || STRIPE_CONNECT_RETURN_URL,
+      refresh_url: getSafeStripeReturnUrl(refreshUrl, STRIPE_CONNECT_REFRESH_URL),
+      return_url: getSafeStripeReturnUrl(returnUrl, STRIPE_CONNECT_RETURN_URL),
       type: "account_onboarding"
     });
 

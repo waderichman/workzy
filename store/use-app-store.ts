@@ -74,6 +74,8 @@ type AppState = {
   hasBootstrapped: boolean;
   status: LoadStatus;
   error: string | null;
+  authError: string | null;
+  authNotice: string | null;
   isAuthenticated: boolean;
   currentAccountId: string | null;
   currentAccount: CurrentAccount | null;
@@ -102,6 +104,7 @@ type AppState = {
   signUp: (input: SignUpInput) => Promise<boolean>;
   resendConfirmation: (email?: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  clearAuthFeedback: () => void;
   updateProfile: (input: UpdateProfileInput) => Promise<boolean>;
   createTask: (input: CreateTaskInput) => Promise<string | null>;
   deleteTask: (taskId: string) => Promise<void>;
@@ -309,6 +312,8 @@ function createInitialState() {
     hasBootstrapped: false,
     status: "idle" as LoadStatus,
     error: null,
+    authError: null,
+    authNotice: null,
     ...createEmptyAuthState(),
     accounts: [],
     pendingSignUp: null,
@@ -353,6 +358,11 @@ export const useAppStore = create<AppState>()(
           error: null,
           inboxNotice: null
         }),
+      clearAuthFeedback: () =>
+        set({
+          authError: null,
+          authNotice: null
+        }),
       hydrateAuthSession: async () => {
         if (!hasSupabaseEnv()) {
           set({
@@ -378,7 +388,9 @@ export const useAppStore = create<AppState>()(
           set({
             ...createEmptyAuthState(),
             status: "success",
-            error: null
+            error: null,
+            authError: null,
+            authNotice: null
           });
           return;
         }
@@ -395,6 +407,9 @@ export const useAppStore = create<AppState>()(
             pendingConfirmationEmail: null,
             status: "success",
             error: null
+            ,
+            authError: null,
+            authNotice: null
           });
         } catch (syncError) {
           console.error("Workzy hydrateAuthSession failed", syncError);
@@ -432,6 +447,7 @@ export const useAppStore = create<AppState>()(
         set({ selectedConversationId: conversationId, pendingThreadTarget: null, inboxNotice: null }),
       login: async ({ email, password }) => {
         set({ status: "loading", error: null });
+        set({ authError: null, authNotice: null });
 
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email.trim().toLowerCase(),
@@ -439,7 +455,7 @@ export const useAppStore = create<AppState>()(
         });
 
         if (error) {
-          set({ status: "error", error: error.message });
+          set({ status: "error", error: error.message, authError: error.message, authNotice: null });
           return false;
         }
 
@@ -455,6 +471,8 @@ export const useAppStore = create<AppState>()(
             pendingConfirmationEmail: null,
             status: "success",
             error: null,
+            authError: null,
+            authNotice: null,
             pendingThreadTarget: null
           });
 
@@ -477,16 +495,26 @@ export const useAppStore = create<AppState>()(
         const safeTravelRadius = Math.max(0, Math.min(50, Math.round(input.travelRadiusMiles || 10)));
 
         if (!input.name.trim() || !normalizedEmail || !input.password.trim()) {
-          set({ status: "error", error: "Name, email, and password are required." });
+          set({
+            status: "error",
+            error: "Name, email, and password are required.",
+            authError: "Name, email, and password are required.",
+            authNotice: null
+          });
           return false;
         }
 
         if (!/^\d{5}$/.test(zipCode)) {
-          set({ status: "error", error: "Use a valid 5-digit ZIP code." });
+          set({
+            status: "error",
+            error: "Use a valid 5-digit ZIP code.",
+            authError: "Use a valid 5-digit ZIP code.",
+            authNotice: null
+          });
           return false;
         }
 
-        set({ status: "loading", error: null });
+        set({ status: "loading", error: null, authError: null, authNotice: null });
 
         const pendingSignUp: PendingSignUp = {
           ...input,
@@ -508,12 +536,17 @@ export const useAppStore = create<AppState>()(
         });
 
         if (error) {
-          set({ status: "error", error: error.message });
+          set({ status: "error", error: error.message, authError: error.message, authNotice: null });
           return false;
         }
 
         if (!data.user) {
-          set({ status: "error", error: "Unable to create your account." });
+          set({
+            status: "error",
+            error: "Unable to create your account.",
+            authError: "Unable to create your account.",
+            authNotice: null
+          });
           return false;
         }
 
@@ -522,7 +555,9 @@ export const useAppStore = create<AppState>()(
         if (!data.session) {
           set({
             status: "success",
-            error: "Account created. Confirm your email, then sign in.",
+            error: null,
+            authError: null,
+            authNotice: "Account created. Confirm your email, then sign in.",
             pendingSignUp,
             pendingConfirmationEmail: normalizedEmail
           });
@@ -540,7 +575,7 @@ export const useAppStore = create<AppState>()(
         });
 
         if (profileError) {
-          set({ status: "error", error: profileError.message });
+          set({ status: "error", error: profileError.message, authError: profileError.message, authNotice: null });
           return false;
         }
 
@@ -550,7 +585,7 @@ export const useAppStore = create<AppState>()(
           .eq("profile_id", authUser.id);
 
         if (deleteError) {
-          set({ status: "error", error: deleteError.message });
+          set({ status: "error", error: deleteError.message, authError: deleteError.message, authNotice: null });
           return false;
         }
 
@@ -571,7 +606,7 @@ export const useAppStore = create<AppState>()(
           );
 
         if (serviceAreaError) {
-          set({ status: "error", error: serviceAreaError.message });
+          set({ status: "error", error: serviceAreaError.message, authError: serviceAreaError.message, authNotice: null });
           return false;
         }
 
@@ -586,7 +621,9 @@ export const useAppStore = create<AppState>()(
             pendingSignUp: null,
             pendingConfirmationEmail: null,
             status: "success",
-            error: null
+            error: null,
+            authError: null,
+            authNotice: null
           });
 
           return true;
@@ -598,6 +635,12 @@ export const useAppStore = create<AppState>()(
               syncError instanceof Error
                 ? `Unable to load account: ${syncError.message}`
                 : "Unable to load account"
+            ,
+            authError:
+              syncError instanceof Error
+                ? `Unable to load account: ${syncError.message}`
+                : "Unable to load account",
+            authNotice: null
           });
           return false;
         }
@@ -606,11 +649,16 @@ export const useAppStore = create<AppState>()(
         const targetEmail = (email ?? get().pendingConfirmationEmail ?? "").trim().toLowerCase();
 
         if (!targetEmail) {
-          set({ status: "error", error: "Enter your email first so we know where to resend it." });
+          set({
+            status: "error",
+            error: "Enter your email first so we know where to resend it.",
+            authError: "Enter your email first so we know where to resend it.",
+            authNotice: null
+          });
           return false;
         }
 
-        set({ status: "loading", error: null });
+        set({ status: "loading", error: null, authError: null, authNotice: null });
 
         const redirectTo =
           process.env.EXPO_PUBLIC_AUTH_CONFIRM_REDIRECT_URL?.trim() || "workzy://confirm";
@@ -624,13 +672,15 @@ export const useAppStore = create<AppState>()(
         });
 
         if (error) {
-          set({ status: "error", error: error.message });
+          set({ status: "error", error: error.message, authError: error.message, authNotice: null });
           return false;
         }
 
         set({
           status: "success",
-          error: `Confirmation email resent to ${targetEmail}.`,
+          error: null,
+          authError: null,
+          authNotice: `Confirmation email resent to ${targetEmail}.`,
           pendingConfirmationEmail: targetEmail
         });
 
@@ -646,6 +696,8 @@ export const useAppStore = create<AppState>()(
         set({
           status: "success",
           error: null,
+          authError: null,
+          authNotice: null,
           ...createEmptyAuthState(),
           pendingSignUp: null,
           pendingConfirmationEmail: null

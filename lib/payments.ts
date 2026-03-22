@@ -37,10 +37,6 @@ async function getCurrentUserContext() {
 
 export async function createPayoutOnboardingLink(profileId: string, name: string) {
   const user = await getCurrentUserContext();
-  const refreshUrl =
-    process.env.EXPO_PUBLIC_STRIPE_CONNECT_REFRESH_URL?.trim() || "workzy://payouts?status=refresh";
-  const returnUrl =
-    process.env.EXPO_PUBLIC_STRIPE_CONNECT_RETURN_URL?.trim() || "workzy://payouts?status=done";
 
   await postJson<StripeAccountResponse>("/stripe/connect/account", {
     profileId,
@@ -49,9 +45,7 @@ export async function createPayoutOnboardingLink(profileId: string, name: string
   });
 
   const accountLink = await postJson<StripeAccountLinkResponse>("/stripe/connect/account-link", {
-    profileId,
-    refreshUrl,
-    returnUrl
+    profileId
   });
 
   return accountLink.url;

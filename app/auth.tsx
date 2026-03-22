@@ -10,11 +10,13 @@ export default function AuthScreen() {
   const hasBootstrapped = useAppStore((state) => state.hasBootstrapped);
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const status = useAppStore((state) => state.status);
-  const error = useAppStore((state) => state.error);
+  const authError = useAppStore((state) => state.authError);
+  const authNotice = useAppStore((state) => state.authNotice);
   const login = useAppStore((state) => state.login);
   const signUp = useAppStore((state) => state.signUp);
   const resendConfirmation = useAppStore((state) => state.resendConfirmation);
   const pendingConfirmationEmail = useAppStore((state) => state.pendingConfirmationEmail);
+  const clearAuthFeedback = useAppStore((state) => state.clearAuthFeedback);
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
@@ -82,8 +84,22 @@ export default function AuthScreen() {
 
       <View className="mt-8 rounded-[28px] border border-[#e8e1d5] bg-white px-5 py-5">
         <View className="flex-row gap-3">
-          <ModePill label="Sign In" active={mode === "login"} onPress={() => setMode("login")} />
-          <ModePill label="Create Account" active={mode === "signup"} onPress={() => setMode("signup")} />
+          <ModePill
+            label="Sign In"
+            active={mode === "login"}
+            onPress={() => {
+              clearAuthFeedback();
+              setMode("login");
+            }}
+          />
+          <ModePill
+            label="Create Account"
+            active={mode === "signup"}
+            onPress={() => {
+              clearAuthFeedback();
+              setMode("signup");
+            }}
+          />
         </View>
 
         {mode === "signup" ? (
@@ -130,9 +146,15 @@ export default function AuthScreen() {
         />
         <Field label="Password" value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry />
 
-        {error ? (
+        {authError ? (
           <View className="mt-5 rounded-[20px] border border-[#efd3d3] bg-[#fff4f4] px-4 py-4">
-            <Text className="text-sm font-semibold text-[#8b3b3b]">{error}</Text>
+            <Text className="text-sm font-semibold text-[#8b3b3b]">{authError}</Text>
+          </View>
+        ) : null}
+
+        {authNotice ? (
+          <View className="mt-5 rounded-[20px] border border-[#d9e7ff] bg-[#f3f8ff] px-4 py-4">
+            <Text className="text-sm font-semibold leading-6 text-[#1849a9]">{authNotice}</Text>
           </View>
         ) : null}
 
